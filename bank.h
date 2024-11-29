@@ -6,6 +6,7 @@ using namespace std;
 _Monitor Bank {
     unsigned int numStudents;
     vector<unsigned int> accounts; // Store balances for each student
+    vector<uCondition> sufficientFunds; // Conditions for waiting on sufficient funds
 
   public:
 	Bank( unsigned int numStudents );

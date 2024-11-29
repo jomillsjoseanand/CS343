@@ -5,6 +5,7 @@ Bank::Bank( unsigned int numStudents ) numStudents(numStudents), accounts(numStu
 
 void Bank::deposit( unsigned int id, unsigned int amount ){
     accounts[id] += amount; // Add amount to the student's account
+    sufficientFunds[id].signal(); // Wake up any couriers waiting for funds
 }
 
 void Bank::withdraw( unsigned int id, unsigned int amount ){
@@ -12,7 +13,7 @@ void Bank::withdraw( unsigned int id, unsigned int amount ){
     // The courier waits until enough money has been deposited, which 
     // may require multiple deposits.
     while (accounts[id] < amount) {
-        _Accept(deposit){}
+        sufficientFunds[id].wait(); // Wait for enough funds to be deposited
     }
     accounts[id] -= amount; // deduct requested amount 
 }
