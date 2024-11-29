@@ -45,7 +45,8 @@ void Student::main() {
                 // If both cards have money, use the gift card first
                 _Select (giftCard) {
                     vendingMachine->buy(favFlavour, *giftCard());
-                    bottlesBought
+                    bottlesBought++;
+                    totalSodasDrank++;
                     prt.print(Printer::Student, id, 'G', favFlavour, ()->getBalance());
                     giftCard.reset();
                 } or _Select (watCard) {
@@ -59,6 +60,8 @@ void Student::main() {
                         throw WATCardOffice::Lost();
                     }
                     vendingMachine->buy(favFlavour, *watCard());
+                    bottlesBought++;
+                    totalSodasDrank++;
                     prt.print(Printer::Student, id, 'B', favFlavour, ()->getBalance());
                 } 
             }
