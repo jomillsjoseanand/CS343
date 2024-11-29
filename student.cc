@@ -27,8 +27,6 @@ void Student::main() {
     // Print selecting vending machine
     prt.print(Printer::Student, id, 'V', vendingMachine->getId());
         
-    prt.print(Printer::Student, id, 'N', vendingMachine->getId());
-
     unsigned int totalFreeSodas = 0;
     unsigned int totalSodasDrank = 0;
     unsigned int bottlesBought = 0;
@@ -92,7 +90,6 @@ void Student::main() {
 
             // If vending machine is out of the student’s favourite flavour, obtain a new vending machine from the name server and attempt another purchase
             vendingMachine = nameServer.getMachine(id);
-            prt.print(Printer::Student, id, 'N', vendingMachine->getId());
             continue;
         } _CatchResume(VendingMachine::Free) {
             """
@@ -101,7 +98,8 @@ void Student::main() {
             while drinking the free soda and then attempts another purchase.
             """ 
             prt.print(Printer::Student, id, 'A', favFlavour); // Advertisement
-            freeSodas++;
+            totalFreeSodas++;
+            totalSodasDrank++;
             // If vending machine delivers a free bottle of soda, there is a 50% chance the student watches an advertisement associated with it by yielding 4 times (not random) while drinking the free soda and then attempts another purchase
             if (prng(0, 1)) {
                 yield(4);
@@ -112,7 +110,7 @@ void Student::main() {
         }
     }
 
-    prt.print(Printer::Student, id, 'F', , ); // Finished
+    prt.print(Printer::Student, id, 'F', totalSodasDrank, totalFreeSodas); // Finished
 }
 
 // Student context:

@@ -1,15 +1,13 @@
 #include "soda.h"
 
 VendingMachine::VendingMachine( Printer & prt, NameServer & nameServer, unsigned int id, unsigned int sodaCost ) prt(prt), nameServer(nameServer), id(id), sodaCost(cost), restocking(false){
-    inventory = new unsigned int[4];
+    curr_inventory = new unsigned int[4];
     for (int i = 0; i < 4; i++) {
-        inventory[i] = 0;
+        curr_inventory[i] = 0;
     }
 
     // TODO: remove this 
     nameServer.VMregister(this);
-    prt.print(Printer::Vending, id, 'S', sodaCost);
-
 }
 
 _Nomutex unsigned int VendingMachine::cost() const {
@@ -22,7 +20,8 @@ _Nomutex unsigned int VendingMachine::getId() const {
 
 unsigned int *VendingMachine::inventory() {
     restocking = true;
-    return inventory;
+    prt.print(Printer::Vending, id, 'r');
+    return curr_inventory;
 }
 
 void VendingMachine::restocked() {
@@ -30,41 +29,36 @@ void VendingMachine::restocked() {
     prt.print(Printer::Vending, id, 'R');
 }
 
-
-
 void VendingMachine::buy( BottlingPlant::Flavours flavour, WATCard &card ) {
     if (restocking) return; // Ignore buy calls during restocking
 
     // vending machine first checks if the student has sufficient funds to purchase the soda 
     if (card.getBalance() < sodaCost) _Resume Funds() _At resumer(); // Check if the student has enough funds
-    if (inventory[flavour] == 0) _Resume Stock() _At resumer();; // Check if the soda is in stock
+    if (curr_inventory[flavour] == 0) _Resume Stock() _At resumer();; // Check if the soda is in stock
     
     // 1 in 5 chance the soda is free
     if (mprng(4) == 0) {
+        prt.print(Printer::Vending, id, 'A');
         _Resume Free() _At resumer();
     }
 
     // Debit the student's WATCard and dispense soda
     card.withdraw(sodaCost);
-    inventory[flavour]--;
-    prt.print(Printer::Vending, id, 'B', flavour, inventory[flavour]);
+    curr_inventory[flavour]--;
+    prt.print(Printer::Vending, id, 'B', flavour, curr_inventory[flavour]);
 }
 
 void VendingMachine::main() {
     prt.print(Printer::Vending, id, 'S', sodaCost);
     for (;;) {
         _Accept(~VendingMachine) {
+            prt.print(Printer::Vending, id, 'F');
             break;
         } or _Accept(inventory) {
-            prt.print(Printer::Vending, id, 'r');
         } or _Accept(restocked) {
-            prt.print(Printer::Vending, id, 'R');
         } or _When(!restocking) _Accept(buy) {
-            prt.print(Printer::Vending, id, 'B', flavour, inventory[flavour]);
         } 
     }
-
-    prt.print(Printer::Vending, id, 'F');
 }
 
 // - sell soda to students at some cost.

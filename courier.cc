@@ -27,7 +27,7 @@ void WATCardOffice::Courier::main() {
             unsigned int sid = job.args.sid;
             
             // Get the bank's response
-            prt.print(Printer::Courier, 't', id, sid, amount);
+            prt.print(Printer::Courier, id, 't', sid, amount);
             bank.withdraw(sid, amount);
             card->deposit(amount);
 
@@ -39,13 +39,13 @@ void WATCardOffice::Courier::main() {
                 job->result.delivery(new WATCardOffice::Lost);
 
                 // Print the lost card
-                prt.print(Printer::Courier, 'L', id, sid);
+                prt.print(Printer::Courier, id, 'L', sid);
                 
                 // Delete the card
                 delete card;
             } else {
                 // Print the transfer
-                prt.print(Printer::Courier, 'T', id, sid, amount);
+                prt.print(Printer::Courier, id, 'T', sid, amount);
                 
                 // Deliver the card
                 job->result.delivery(card);

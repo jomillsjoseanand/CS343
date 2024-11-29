@@ -47,14 +47,19 @@ WATCardOffice::Job * WATCardOffice::requestWork() {
 }
 
 void WATCardOffice::main() {
+    prt.print(Printer::Kind::WATCardOffice, 'S');
     for ( ;; ) {
         _Accept(~WATCardOffice) {
+            prt.print(Printer::Kind::WATCardOffice, 'F');
             break;
         } or _Accept(create) {
             bench.signalBlock();
+            prt.print(Printer::Kind::WATCardOffice, 'C', job->args.sid, job->args.amount);
         } or _Accept(transfer) {
             bench.signalBlock();
+            prt.print(Printer::Kind::WATCardOffice, 'T', job->args.sid, job->args.amount);
         } or _Accept(requestWork) {
+            prt.print(Printer::Kind::WATCardOffice, 'W');
         }
     }
 }

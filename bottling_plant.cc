@@ -29,12 +29,11 @@ void BottlingPlant::main (){
         //  pickup the production run, pick up just means the shipment is copied into the cargo array passed by the truck.
         _Accept(~BottlingPlant) {
             // Shutdown signal detected
+            prt.print(Printer::BottlingPlant, 'F');
             throw Shutdown();
         }
         or _Accept(getShipment) {} 
     } catch (Shutdown &) {
-        // Print the shutdown message
-        prt.print(Printer::BottlingPlant, 'F');
         // Propagate the exception to the correct task
         _Resume Shutdown() _At truck;
     }

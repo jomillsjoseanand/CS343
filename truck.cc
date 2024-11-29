@@ -6,6 +6,7 @@ Truck::Truck( Printer & prt, NameServer & nameServer, BottlingPlant & plant,
 
 
 void Truck::main(){
+    prt.print(Printer::Kind::Truck, "S");
 
     // Obtain vending machine locations from the NameServer
     VendingMachine **vendingMachines = nameServer.getMachineList();
@@ -34,17 +35,22 @@ void Truck::main(){
                 unsigned int currentMachineIdx = startMachineIdx ;
                 unsigned int totalSoda = 0;
                 for (unsigned int amount : cargo) totalSoda += amount;
-                
+                prt.print(Printer::Kind::Truck, "P", totalSoda);
+
                 do {
                     
                     // the vending machine after the last machine the truck restocked, until there is no more soda on the truck or the
                     // truck has made a complete cycle
                     if (totalSoda == 0) break;
 
+                    prt.print(Printer::Kind::Truck, "d", currentMachineIdx, totalSoda);
+
                     VendingMachine* curr_machine = vendingMachines[currentMachineIdx];
+                    int bottlesNotReplenished = 0;
                     for (unsigned int i = 0; i < BottlingPlant::NumFlavours; ++i) {
                         unsingned int spaceAvailable = maxStockPerFlavour - curr_machine.inventory()[i];
                         unsigned int stockToAdd = std::min(spaceAvailable, cargo[i]);
+                        if (spaceAvailable > cargo[i]) bottlesNotReplenished += spaceAvailable - cargo[i];
                         cargo[i] -= stockToAdd;
                         curr_machine.inventory()[i] += stockToAdd;
                         totalSoda -= stockToAdd;
@@ -53,16 +59,20 @@ void Truck::main(){
                     // Update the vending machine inventory
                     curr_machine->restocked();
 
-                    // TODO: Print restocking results
+                    // TODO: Print unstocked soda
+                    if (bottlesNotReplenished > 0) {
+                        prt.print(Printer::Kind::Truck, "U", currentMachineIdx, bottlesNotReplenished);
+                    }
+
+                    prt.print(Printer::Kind::Truck, "D", currentMachineIdx, totalSoda);
                     
                     // Move to the next vending machine cyclically
                     currentMachineIdx = (currentMachineIdx + 1) % numVendingMachines;
 
                     // 1 in 100 chance of a flat tire; takes 10 yields to fix
                     if (prng(1, 100) == 1) {
-                        // prt.print(Printer::Kind::Truck, "Flat tire! Fixing...");
+                        prt.print(Printer::Kind::Truck, "W");
                         for (int i = 0; i < 10; i++) yield();
-                        // prt.print(Printer::Kind::Truck, "Flat tire fixed.");
                     }
                 
                 } while (currentMachineIdx != startMachineIdx);

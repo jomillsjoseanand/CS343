@@ -4,12 +4,16 @@
 #include "uPRNG.h"                  // For pseudorandom number generation
 #include <uFuture.h>
 #include <uSemaphore.h>
+#include <vector> 
+#include <queue>
+
+using namespace std;
 
 // Forward declare
 _Task Groupoff;
 _Task Student;
-_Task WATCardOffice;
 class WATCard;
+_Task WATCardOffice;
 _Task VendingMachine;
 _Task NameServer;
 _Task Truck;
@@ -18,37 +22,7 @@ _Monitor Bank;
 _Task Parent;
 _Monitor Printer;
 
-_Task Groupoff {
-	void main();
-    Printer & prt;
-    unsigned int numStudents;
-    unsigned int sodaCost;
-    unsigned int groupoffDelay;
-    vector<WATCard::FWATCard> giftCards;
-  public:
-	Groupoff( Printer & prt, unsigned int numStudents, unsigned int sodaCost, unsigned int groupoffDelay );
-	WATCard::FWATCard giftCard( unsigned int id );
-};
 
-_Task Student {
-	void main();
-    Printer & prt;
-    NameServer & nameServer;
-    WATCardOffice & cardOffice;
-    Groupoff & groupoff;
-	unsigned int id;
-    unsigned int maxPurchases;
-    VendingMachine * vendingMachine;
-    WATCard::FWATCard watCard;
-    WATCard::FWATCard giftCard;
-    unsigned int numPurchases;
-    BottlingPlant::Flavour favouriteFlavour;
-    bool lostCard;
-
-  public:
-	Student( Printer & prt, NameServer & nameServer, WATCardOffice & cardOffice, Groupoff & groupoff,
-			 unsigned int id, unsigned int maxPurchases );
-};
 
 _Task WATCardOffice {
 	struct Args {
@@ -60,13 +34,15 @@ _Task WATCardOffice {
     };
     
     
-    struct Job {							// marshalled arguments and return future
-		Args args;							// call arguments (YOU DEFINE "Args")
+    struct Job {							    // marshalled arguments and return future
+		Args args;							      // call arguments (YOU DEFINE "Args")
 		WATCard::FWATCard result;			// return future
 		Job( Args args ) : args( args ) {}
 	};
-	_Task Courier { 
+	
+  _Task Courier { 
 
+        void main();
         Printer &prt;
         Bank &bank;
         WATCardOffice &office;
@@ -100,16 +76,31 @@ class WATCard {
 	WATCard( const WATCard && ) = delete;
 	WATCard & operator=( const WATCard & ) = delete;
 	WATCard & operator=( const WATCard && ) = delete;
-    unsigned int balance;
-    uSemaphore mutex;
+  unsigned int balance;
+  uSemaphore mutex;
     
   
   public:
-	typedef Future_ISM<WATCard *> FWATCard;	// future watcard pointer
-	WATCard();
-	void deposit( unsigned int amount );
-	void withdraw( unsigned int amount );
-	unsigned int getBalance();
+    typedef Future_ISM<WATCard *> FWATCard; // Future WATCard pointer	
+    
+    WATCard();
+    void deposit( unsigned int amount );
+    void withdraw( unsigned int amount );
+    unsigned int getBalance();
+};
+
+_Task Groupoff {
+    void main();
+    
+    Printer & prt;
+    unsigned int numStudents;
+    unsigned int sodaCost;
+    unsigned int groupoffDelay;
+    vector<WATCard::FWATCard> giftCards;
+    
+  public:
+    Groupoff( Printer & prt, unsigned int numStudents, unsigned int sodaCost, unsigned int groupoffDelay );
+    WATCard::FWATCard giftCard( unsigned int id );
 };
 
 _Task VendingMachine {
@@ -118,7 +109,7 @@ _Task VendingMachine {
     NameServer & nameServer;
     unsigned int id; 
     unsigned int sodaCost;
-	unsigned int inventory[4];
+	  unsigned int curr_inventory[4];
     bool restocking;                           // Flag to indicate if the machine is being restocked
 
     
@@ -189,6 +180,26 @@ _Task BottlingPlant {
 	void getShipment( unsigned int cargo[] );
 };
 
+_Task Student {
+	  void main();
+    Printer & prt;
+    NameServer & nameServer;
+    WATCardOffice & cardOffice;
+    Groupoff & groupoff;
+	  unsigned int id;
+    unsigned int maxPurchases;
+    VendingMachine * vendingMachine;
+    WATCard::FWATCard watCard;
+    WATCard::FWATCard giftCard;
+    unsigned int numPurchases;
+    BottlingPlant::Flavours favouriteFlavour;
+    bool lostCard;
+
+  public:
+    Student( Printer & prt, NameServer & nameServer, WATCardOffice & cardOffice, Groupoff & groupoff,
+        unsigned int id, unsigned int maxPurchases );
+};
+
 _Monitor Bank {
     unsigned int numStudents;
     vector<unsigned int> accounts; // Store balances for each student
@@ -213,7 +224,6 @@ _Task Parent {
 };
 
 _Monitor Printer {
-    enum Kind { Parent, Groupoff, WATCardOffice, NameServer, Truck, BottlingPlant, Student, Vending, Courier };
 
     unsigned int numStudents;
     unsigned int numVendingMachines;
@@ -228,12 +238,13 @@ _Monitor Printer {
         int value2 = -1;
     };
 
-    vector<Buffer> buffer;           // Vector of buffers for storing each voter's state
+    vector<BufferEntry> buffer;           // Vector of buffers for storing each voter's state
 
     void flush();                    // Function to output and clear buffer content
-    unsigned int determineColumn(Kind kind, unsigned int lid = 0) const;
 
     public:
+        enum Kind { Parent, Groupoff, WATCardOffice, NameServer, Truck, BottlingPlant, Student, Vending, Courier };
+
         Printer( unsigned int numStudents, unsigned int numVendingMachines, unsigned int numCouriers );
         ~Printer();
         void print( Kind kind, char state );
@@ -242,6 +253,10 @@ _Monitor Printer {
         void print( Kind kind, unsigned int lid, char state );
         void print( Kind kind, unsigned int lid, char state, unsigned int value1 );
         void print( Kind kind, unsigned int lid, char state, unsigned int value1, unsigned int value2 );
+    private:
+    unsigned int determineColumn(Kind kind, unsigned int lid = 0) const;
+
+
 };
 
 #endif
