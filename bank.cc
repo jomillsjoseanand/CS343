@@ -1,6 +1,8 @@
-#include "bank.h"
+#include "soda.h"
 
 Bank::Bank( unsigned int numStudents ) numStudents(numStudents), accounts(numStudents, 0) {
+    // Initialize the sufficientFunds array with the same size as the accounts array
+    sufficientFunds = new uCondition[numStudents];
 }
 
 void Bank::deposit( unsigned int id, unsigned int amount ){
@@ -16,4 +18,8 @@ void Bank::withdraw( unsigned int id, unsigned int amount ){
         sufficientFunds[id].wait(); // Wait for enough funds to be deposited
     }
     accounts[id] -= amount; // deduct requested amount 
+}
+
+Bank::~Bank() {
+    delete[] sufficientFunds;
 }

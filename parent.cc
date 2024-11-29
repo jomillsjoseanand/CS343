@@ -1,4 +1,4 @@
-#include "parent.h"
+#include "soda.h"
 
 Parent::Parent( Printer & prt, Bank & bank, unsigned int numStudents, unsigned int parentalDelay ) prt(prt), bank(bank), numStudents(numStudents), parentalDelay(parentalDelay) {}
 
@@ -14,15 +14,18 @@ Parent::Parent( Printer & prt, Bank & bank, unsigned int numStudents, unsigned i
 void Parent::main(){
 
     printer.print(Printer::Kind::Parent, 'S'); // Parent start message
+    unsigned int total = 0;
 
     while (true) {
         _Accept(~Parent) {
+            printer.print(Printer::Kind::Parent, 'F', total); // Parent finish message
             break; // Destructor called, terminate the loop
         } _Else {
             yield(parentalDelay); // Yield for parentalDelay times
 
             // Generate a random amount of money between $1 and $3
             int amount = prng(1, 3);
+            total += amount;
 
             // Select a random student to receive the money
             int studentId = prng(0, numStudents - 1);
@@ -34,6 +37,4 @@ void Parent::main(){
             printer.print(Printer::Kind::Parent, 'D', studentId, amount);
         }
     }
-
-    printer.print(Printer::Kind::Parent, 'F'); // Parent finish message
 }

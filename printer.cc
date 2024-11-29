@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 
-#include "printer.h"
+#include "soda.h"
 
 // Flush function to print the current buffered states of all voters
 void Printer::flush() {

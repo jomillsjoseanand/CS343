@@ -2,18 +2,8 @@
 
 #include <iostream>
 
-#include "printer.h"
+#include "soda.h"
 #include "config.h"
-
-#include "vending_machine.h"
-#include "bottling_plant.h"
-#include "bank.h"
-#include "name_server.h"
-#include "parent.h"
-#include "watcard_office.h"
-#include "groupoff.h"
-#include "students.h"
-
 
 using namespace std;
 
