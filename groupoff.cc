@@ -50,8 +50,9 @@ void Groupoff::main() {
         yield(groupoffDelay);
         unsigned int student = prng(numStudents - 1);
         if (!giftCards[student].available()) {
-            W
-            giftCards[student].delivery(new WATCard());
+            WATCard *giftCardObj = new WATCard();
+            giftCardObj->deposit(sodaCost);
+            giftCards[student].delivery(giftCardObj);
             // Print the assigned gift card
             prt.print(Printer::Kind::Groupoff, 'D', student, sodaCost);
             assigned++;

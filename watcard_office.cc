@@ -8,17 +8,19 @@ WATCardOffice::WATCardOffice( Printer &prt, Bank &bank, unsigned int numCouriers
     // Create courier pool
     couriers = new Courier *[numCouriers];
     for (unsigned int i = 0; i < numCouriers; i++) {
-        couriers.push_back(new Courier(prt, bank, *this, i));
+        couriers[i] = new Courier(prt, bank, *this, i);
     }
 }
 
 WATCard::FWATCard WATCardOffice::create(unsigned int sid, unsigned int amount) {
+    prt.print(Printer::Kind::WATCardOffice, 'C', sid, amount);
     Job *job = new Job(Args(sid, amount)); // Create a new job for creating a WATCard
     jobQueue.push(job);
     return job->result; // Return the future
 }
 
 WATCard::FWATCard WATCardOffice::transfer(unsigned int sid, unsigned int amount, WATCard *card) {
+    prt.print(Printer::Kind::WATCardOffice, 'T', sid, amount);
     Job *job = new Job(Args(sid, amount, card)); // Create a new job for transferring funds
     jobQueue.push(job);
     return job->result; // Return the future
@@ -54,10 +56,8 @@ void WATCardOffice::main() {
             break;
         } or _Accept(create) {
             bench.signalBlock();
-            prt.print(Printer::Kind::WATCardOffice, 'C', job->args.sid, job->args.amount);
         } or _Accept(transfer) {
             bench.signalBlock();
-            prt.print(Printer::Kind::WATCardOffice, 'T', job->args.sid, job->args.amount);
         } or _Accept(requestWork) {
             prt.print(Printer::Kind::WATCardOffice, 'W');
         }

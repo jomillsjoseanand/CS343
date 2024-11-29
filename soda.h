@@ -4,8 +4,10 @@
 #include "uPRNG.h"                  // For pseudorandom number generation
 #include <uFuture.h>
 #include <uSemaphore.h>
+#include <uC++.h> // Make sure the uC++ headers are included properly.
 #include <vector> 
 #include <queue>
+#include <iostream>
 
 using namespace std;
 
@@ -22,7 +24,23 @@ _Monitor Bank;
 _Task Parent;
 _Monitor Printer;
 
-
+class WATCard {
+	WATCard( const WATCard & ) = delete;	// prevent copying
+	WATCard( const WATCard && ) = delete;
+	WATCard & operator=( const WATCard & ) = delete;
+	WATCard & operator=( const WATCard && ) = delete;
+  unsigned int balance;
+  uSemaphore mutex;
+    
+  
+  public:
+    typedef Future_ISM<WATCard *> FWATCard; // Future WATCard pointer	
+    
+    WATCard();
+    void deposit( unsigned int amount );
+    void withdraw( unsigned int amount );
+    unsigned int getBalance();
+};
 
 _Task WATCardOffice {
 	struct Args {
@@ -71,24 +89,6 @@ _Task WATCardOffice {
 	Job * requestWork() __attribute__(( warn_unused_result ));
 };
 
-class WATCard {
-	WATCard( const WATCard & ) = delete;	// prevent copying
-	WATCard( const WATCard && ) = delete;
-	WATCard & operator=( const WATCard & ) = delete;
-	WATCard & operator=( const WATCard && ) = delete;
-  unsigned int balance;
-  uSemaphore mutex;
-    
-  
-  public:
-    typedef Future_ISM<WATCard *> FWATCard; // Future WATCard pointer	
-    
-    WATCard();
-    void deposit( unsigned int amount );
-    void withdraw( unsigned int amount );
-    unsigned int getBalance();
-};
-
 _Task Groupoff {
     void main();
     
@@ -103,6 +103,45 @@ _Task Groupoff {
     WATCard::FWATCard giftCard( unsigned int id );
 };
 
+_Task Truck {
+	void main();
+    Printer & prt;
+    NameServer & nameServer;
+    BottlingPlant & plant;
+	unsigned int numVendingMachines;
+    unsigned int maxStockPerFlavour;
+    unsigned int cargo[4];
+
+
+  public:
+	Truck( Printer & prt, NameServer & nameServer, BottlingPlant & plant, unsigned int numVendingMachines, unsigned int maxStockPerFlavour );
+};
+
+_Task BottlingPlant {
+
+    void main();
+    Printer & prt;
+    NameServer & nameServer;
+    unsigned int numVendingMachines;
+    unsigned int maxShippedPerFlavour;
+    unsigned int maxStockPerFlavour;
+    unsigned int timeBetweenShipments;
+    unsigned int inventory[4];
+    
+    Truck *truck;
+  
+  public:
+	  enum Flavours { Blues_BlackCherry, Classic_CreamSoda, Rock_RootBeer, Jazz_Lime  };	// flavours of soda (YOU DEFINE)
+	
+    _Exception Shutdown {};					// shutdown plant
+	
+    BottlingPlant( Printer & prt, NameServer & nameServer, unsigned int numVendingMachines,
+    unsigned int maxShippedPerFlavour, unsigned int maxStockPerFlavour,
+    unsigned int timeBetweenShipments );
+    ~BottlingPlant();
+;    void getShipment( unsigned int cargo[] );
+};
+
 _Task VendingMachine {
 	void main();
     Printer & prt;
@@ -111,7 +150,7 @@ _Task VendingMachine {
     unsigned int sodaCost;
 	  unsigned int curr_inventory[4];
     bool restocking;                           // Flag to indicate if the machine is being restocked
-
+    uCondition bench;
     
   public:
 	_Exception Funds {};					// insufficient funds
@@ -130,8 +169,9 @@ _Task NameServer {
 	void main();
     Printer & prt;
     unsigned int numVendingMachines;
+    unsigned int registeredMachines;
     unsigned int numStudents;
-	VendingMachine ** vendingMachines;
+	  VendingMachine ** vendingMachines;
     unsigned int * studentMachineIndex;
     uCondition bench; 
 
@@ -141,43 +181,6 @@ _Task NameServer {
     void VMregister( VendingMachine * vendingmachine );
 	VendingMachine * getMachine( unsigned int id ) __attribute__(( warn_unused_result ));
 	VendingMachine ** getMachineList() __attribute__(( warn_unused_result ));
-};
-
-_Task Truck {
-	void main();
-    Printer & prt;
-    NameServer & nameServer;
-    BottlingPlant & plant;
-	unsigned int numVendingMachines;
-    unsigned int maxStockPerFlavour;
-    unsigned int cargo[4];
-
-
-  public:
-	Truck( Printer & prt, NameServer & nameServer, BottlingPlant & plant,
-		   unsigned int numVendingMachines, unsigned int maxStockPerFlavour );
-};
-
-_Task BottlingPlant {
-	void main();
-    Printer & prt;
-    NameServer & nameServer;
-    unsigned int numVendingMachines;
-	unsigned int maxShippedPerFlavour;
-    unsigned int maxStockPerFlavour;
-	unsigned int timeBetweenShipments;
-    unsigned int inventory[4];
-    Truck truck;
-  
-  public:
-	enum Flavours { Blues_BlackCherry, Classic_CreamSoda, Rock_RootBeer, Jazz_Lime  };	// flavours of soda (YOU DEFINE)
-	
-    _Exception Shutdown {};					// shutdown plant
-	
-    BottlingPlant( Printer & prt, NameServer & nameServer, unsigned int numVendingMachines,
-				 unsigned int maxShippedPerFlavour, unsigned int maxStockPerFlavour,
-				 unsigned int timeBetweenShipments );
-	void getShipment( unsigned int cargo[] );
 };
 
 _Task Student {
@@ -207,6 +210,7 @@ _Monitor Bank {
 
   public:
 	Bank( unsigned int numStudents );
+  ~Bank();
 	void deposit( unsigned int id, unsigned int amount );
 	void withdraw( unsigned int id, unsigned int amount );
 };
@@ -233,9 +237,9 @@ _Monitor Printer {
 
     struct BufferEntry {                    // Buffer to temporarily store vote and state informationn
         char state;                         // State to print
-        bool empty = true;                  // Whether this buffer slot is empty
         int value1 = -1; 
         int value2 = -1;
+        bool empty = true;                  // Whether this buffer slot is empty
     };
 
     vector<BufferEntry> buffer;           // Vector of buffers for storing each voter's state

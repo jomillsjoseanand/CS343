@@ -1,7 +1,7 @@
 #include "soda.h"
+#include <iostream>
 
-VendingMachine::VendingMachine( Printer & prt, NameServer & nameServer, unsigned int id, unsigned int sodaCost ) prt(prt), nameServer(nameServer), id(id), sodaCost(cost), restocking(false){
-    curr_inventory = new unsigned int[4];
+VendingMachine::VendingMachine( Printer & prt, NameServer & nameServer, unsigned int id, unsigned int sodaCost ) : prt(prt), nameServer(nameServer), id(id), sodaCost(sodaCost), restocking(false){
     for (int i = 0; i < 4; i++) {
         curr_inventory[i] = 0;
     }
@@ -18,7 +18,10 @@ _Nomutex unsigned int VendingMachine::getId() const {
     return id;
 }
 
-unsigned int *VendingMachine::inventory() {
+unsigned int * VendingMachine::inventory() {
+    if (restocking) {
+        bench.wait();
+    }
     restocking = true;
     prt.print(Printer::Vending, id, 'r');
     return curr_inventory;
@@ -27,6 +30,9 @@ unsigned int *VendingMachine::inventory() {
 void VendingMachine::restocked() {
     restocking = false;
     prt.print(Printer::Vending, id, 'R');
+    if (!bench.empty()) {
+        bench.signalBlock();
+    }
 }
 
 void VendingMachine::buy( BottlingPlant::Flavours flavour, WATCard &card ) {
@@ -37,7 +43,7 @@ void VendingMachine::buy( BottlingPlant::Flavours flavour, WATCard &card ) {
     if (curr_inventory[flavour] == 0) _Resume Stock() _At resumer();; // Check if the soda is in stock
     
     // 1 in 5 chance the soda is free
-    if (mprng(4) == 0) {
+    if (prng(4) == 0) {
         prt.print(Printer::Vending, id, 'A');
         _Resume Free() _At resumer();
     }

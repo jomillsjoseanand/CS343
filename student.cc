@@ -1,8 +1,9 @@
 #include "soda.h"
 
-Student( Printer & prt, NameServer & nameServer, WATCardOffice & cardOffice, Groupoff & groupoff,
-			 unsigned int id, unsigned int maxPurchases ) prt(prt), nameServer(nameServer), 
-             cardOffice(cardOffice), groupoff(groupoff), lostCard(false), id(id), maxPurchases(maxPurchases) {
+Student::Student( Printer & prt, NameServer & nameServer, WATCardOffice & cardOffice, Groupoff & groupoff,
+			 unsigned int id, unsigned int maxPurchases) : prt(prt), nameServer(nameServer), 
+             cardOffice(cardOffice), groupoff(groupoff), id(id), maxPurchases(maxPurchases) {
+                lostCard = false;
              }
 
 
@@ -11,9 +12,9 @@ void Student::main() {
     unsigned int numPurchases = prng(1, maxPurchases);
 
     // Select a random favourite flavour [0, 3]
-    VendingMachine::Flavours favFlavour = static_cast<VendingMachine::Flavours>(prng(0, 3));
+    BottlingPlant::Flavours favouriteFlavour = static_cast<BottlingPlant::Flavours>(prng(0, 3));
 
-    prt.print(Printer::Student, id, 'S', favFlavour, numPurchases); // Start of student
+    prt.print(Printer::Student, id, 'S', favouriteFlavour, numPurchases); // Start of student
 
     // Create a WATCard from the WATCardOffice and initialize balance with $5
     WATCard::FWATCard watCard = cardOffice.create(id, 5);
@@ -31,7 +32,7 @@ void Student::main() {
     unsigned int totalSodasDrank = 0;
     unsigned int bottlesBought = 0;
 
-    while (bottlesBought < bottlesToBuy) {
+    while (bottlesBought < numPurchases) {
         if (!lostCard) {
             yield(prng(1, 10)); // Yield before attempting to purchase
         }
@@ -42,62 +43,51 @@ void Student::main() {
             _Enable {
                 // If both cards have money, use the gift card first
                 _Select (giftCard) {
-                    vendingMachine->buy(favFlavour, *giftCard());
+                    vendingMachine->buy(favouriteFlavour, *giftCard());
                     bottlesBought++;
                     totalSodasDrank++;
-                    prt.print(Printer::Student, id, 'G', favFlavour, ()->getBalance());
+                    prt.print(Printer::Student, id, 'G', favouriteFlavour, giftCard()->getBalance());
                     giftCard.reset();
                 } or _Select (watCard) {
-                    """
-                    If a courier has lost a student’s WATCard during a transfer (see WATCardOffice::Courier),
-                    the exception WATCardOffice::Lost is raised when the future value is accessed. In this case, the student must
-                    create a new WATCard from the WATCardOffice with a $5 balance, and re-attempt to purchase a soda without
-                    yielding as a purchase has not occurred
-                    """
-                    if (watCard == WATCardOffice::Lost) {
-                        throw WATCardOffice::Lost();
-                    }
-                    vendingMachine->buy(favFlavour, *watCard());
+                    
+                    vendingMachine->buy(favouriteFlavour, *watCard());
                     bottlesBought++;
                     totalSodasDrank++;
-                    prt.print(Printer::Student, id, 'B', favFlavour, ()->getBalance());
+                    prt.print(Printer::Student, id, 'B', favouriteFlavour, watCard()->getBalance());
                 } 
             }
         } _CatchResume(WATCardOffice::Lost) {
             lostCard = true;
             prt.print(Printer::Student, id, 'L'); // Lost card
             watCard = cardOffice.create(id, 5);
-            continue;
         } 
         _CatchResume(VendingMachine::Funds) {
-            """
-            If the vending machine indicates
-            insufficient funds, a student transfers the current vending-machine soda-cost plus $5 to their WATCard via the
-            WATCard office and attempts another purchase.
-            """
+            // 
+            // If the vending machine indicates
+            // insufficient funds, a student transfers the current vending-machine soda-cost plus $5 to their WATCard via the
+            // WATCard office and attempts another purchase.
+            // 
 
             // If vending machine indicates insufficient funds, transfer the current vending-machine soda-cost plus $5 to their WATCard via the WATCard office and attempt another purchase
-            watCard = cardOffice.transfer(id, vendingMachine->cost() + 5, *watCard());
-            continue;
+            watCard = cardOffice.transfer(id, vendingMachine->cost() + 5, watCard());
         } _CatchResume(VendingMachine::Stock) {
-            """
-            If the vending machine is out of the student’s favourite flavour,
-            the student must obtain a new vending machine from the name server and 
-            attempt another purchase.
-            a student may perform a busy wait among vending machines until their 
-            specific soda appears from the bottling plant. 
-            """
+            // 
+            // If the vending machine is out of the student’s favourite flavour,
+            // the student must obtain a new vending machine from the name server and 
+            // attempt another purchase.
+            // a student may perform a busy wait among vending machines until their 
+            // specific soda appears from the bottling plant. 
+            // 
 
             // If vending machine is out of the student’s favourite flavour, obtain a new vending machine from the name server and attempt another purchase
             vendingMachine = nameServer.getMachine(id);
-            continue;
         } _CatchResume(VendingMachine::Free) {
-            """
-            there is a 50% chance the student watches an advertisement 
-            associated with it by yielding 4 times (not random) 
-            while drinking the free soda and then attempts another purchase.
-            """ 
-            prt.print(Printer::Student, id, 'A', favFlavour); // Advertisement
+            // 
+            // there is a 50% chance the student watches an advertisement 
+            // associated with it by yielding 4 times (not random) 
+            // while drinking the free soda and then attempts another purchase.
+            //  
+            prt.print(Printer::Student, id, 'A', favouriteFlavour); // Advertisement
             totalFreeSodas++;
             totalSodasDrank++;
             // If vending machine delivers a free bottle of soda, there is a 50% chance the student watches an advertisement associated with it by yielding 4 times (not random) while drinking the free soda and then attempts another purchase
@@ -106,7 +96,6 @@ void Student::main() {
             } else {
                 prt.print(Printer::Student, id, 'X'); // No advertisement
             }
-            continue;
         }
     }
 

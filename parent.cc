@@ -1,6 +1,6 @@
 #include "soda.h"
 
-Parent::Parent( Printer & prt, Bank & bank, unsigned int numStudents, unsigned int parentalDelay ) prt(prt), bank(bank), numStudents(numStudents), parentalDelay(parentalDelay) {}
+Parent::Parent( Printer & prt, Bank & bank, unsigned int numStudents, unsigned int parentalDelay ) : prt(prt), bank(bank), numStudents(numStudents), parentalDelay(parentalDelay) {}
 
 // - Parent task periodically gives a random amount of money [$1, $3] to a random student [0, NumStudents),
 // in that order. 
@@ -13,12 +13,12 @@ Parent::Parent( Printer & prt, Bank & bank, unsigned int numStudents, unsigned i
 // a yielding busy-wait on calls to its destructor.
 void Parent::main(){
 
-    printer.print(Printer::Kind::Parent, 'S'); // Parent start message
+    prt.print(Printer::Kind::Parent, 'S'); // Parent start message
     unsigned int total = 0;
 
     while (true) {
         _Accept(~Parent) {
-            printer.print(Printer::Kind::Parent, 'F', total); // Parent finish message
+            prt.print(Printer::Kind::Parent, 'F', total); // Parent finish message
             break; // Destructor called, terminate the loop
         } _Else {
             yield(parentalDelay); // Yield for parentalDelay times
@@ -31,10 +31,10 @@ void Parent::main(){
             int studentId = prng(0, numStudents - 1);
 
             // Deposit the money into the student's account
-            bankRef.deposit(studentId, amount);
+            bank.deposit(studentId, amount);
 
             // Print the gift message
-            printer.print(Printer::Kind::Parent, 'D', studentId, amount);
+            prt.print(Printer::Kind::Parent, 'D', studentId, amount);
         }
     }
 }

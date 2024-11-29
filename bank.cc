@@ -1,8 +1,7 @@
 #include "soda.h"
 
-Bank::Bank( unsigned int numStudents ) numStudents(numStudents), accounts(numStudents, 0) {
-    // Initialize the sufficientFunds array with the same size as the accounts array
-    sufficientFunds = new uCondition[numStudents];
+Bank::Bank( unsigned int numStudents ) : numStudents(numStudents), accounts(numStudents, 0), sufficientFunds(numStudents) {
+    
 }
 
 void Bank::deposit( unsigned int id, unsigned int amount ){
@@ -21,5 +20,4 @@ void Bank::withdraw( unsigned int id, unsigned int amount ){
 }
 
 Bank::~Bank() {
-    delete[] sufficientFunds;
 }

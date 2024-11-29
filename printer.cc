@@ -38,12 +38,12 @@ void Printer::flush() {
 }
 
 // Printer constructor to initialize the number of voters and their state buffer
-Printer::Printer( unsigned int numStudents, unsigned int numVendingMachines, unsigned int numCouriers ) numStudents(numStudents), numVendingMachines(numVendingMachines), numCouriers(numCouriers) {
+Printer::Printer( unsigned int numStudents, unsigned int numVendingMachines, unsigned int numCouriers ) : numStudents(numStudents), numVendingMachines(numVendingMachines), numCouriers(numCouriers) {
     numColumns = 6 + numStudents + numVendingMachines + numCouriers; // Fixed + variable instances
     buffer.resize(numColumns);
 
     // Print column headers
-    const char* headers[] = { "Parent", "Groupoff", "WATOff", "Names", "Truck", "Plant" };
+    const char* headers[] = { "Parent", "Gropoff", "WATOff", "Names", "Truck", "Plant" };
     for (unsigned int i = 0; i < numColumns; i++) {
         if (i < 6) {
             std::cout << headers[i];
@@ -72,7 +72,7 @@ Printer::~Printer(){
 }
 
 // Determine the column index for a given kind and lid
-unsigned int Printer::determineColumn(Kind kind, unsigned int lid = 0) const {
+unsigned int Printer::determineColumn(Kind kind, unsigned int lid) const {
     switch (kind) {
         case Parent: return 0;
         case Groupoff: return 1;

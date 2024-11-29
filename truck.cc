@@ -1,12 +1,11 @@
 #include "soda.h"
 
-Truck::Truck( Printer & prt, NameServer & nameServer, BottlingPlant & plant,
-		   unsigned int numVendingMachines, unsigned int maxStockPerFlavour ) prt(prt), nameServer(nameServer), plant(plant), 
+Truck::Truck( Printer & prt, NameServer & nameServer, BottlingPlant & plant, unsigned int numVendingMachines, unsigned int maxStockPerFlavour ) : prt(prt), nameServer(nameServer), plant(plant), 
            numVendingMachines(numVendingMachines), maxStockPerFlavour(maxStockPerFlavour)  {}
 
 
 void Truck::main(){
-    prt.print(Printer::Kind::Truck, "S");
+    prt.print(Printer::Kind::Truck, 'S');
 
     // Obtain vending machine locations from the NameServer
     VendingMachine **vendingMachines = nameServer.getMachineList();
@@ -35,7 +34,7 @@ void Truck::main(){
                 unsigned int currentMachineIdx = startMachineIdx ;
                 unsigned int totalSoda = 0;
                 for (unsigned int amount : cargo) totalSoda += amount;
-                prt.print(Printer::Kind::Truck, "P", totalSoda);
+                prt.print(Printer::Kind::Truck, 'P', totalSoda);
 
                 do {
                     
@@ -43,16 +42,19 @@ void Truck::main(){
                     // truck has made a complete cycle
                     if (totalSoda == 0) break;
 
-                    prt.print(Printer::Kind::Truck, "d", currentMachineIdx, totalSoda);
+                    prt.print(Printer::Kind::Truck, 'd', currentMachineIdx, totalSoda);
 
                     VendingMachine* curr_machine = vendingMachines[currentMachineIdx];
                     int bottlesNotReplenished = 0;
-                    for (unsigned int i = 0; i < BottlingPlant::NumFlavours; ++i) {
-                        unsingned int spaceAvailable = maxStockPerFlavour - curr_machine.inventory()[i];
+                    unsigned int * inventory = curr_machine->inventory();
+                    for (unsigned int i = 0; i < 4; ++i) {
+                        unsigned int spaceAvailable = maxStockPerFlavour - inventory[i];
                         unsigned int stockToAdd = std::min(spaceAvailable, cargo[i]);
-                        if (spaceAvailable > cargo[i]) bottlesNotReplenished += spaceAvailable - cargo[i];
+                        if (spaceAvailable > cargo[i]) {
+                                bottlesNotReplenished += spaceAvailable - cargo[i];
+                        }
                         cargo[i] -= stockToAdd;
-                        curr_machine.inventory()[i] += stockToAdd;
+                        inventory[i] += stockToAdd;
                         totalSoda -= stockToAdd;
                     }
 
@@ -61,17 +63,17 @@ void Truck::main(){
 
                     // TODO: Print unstocked soda
                     if (bottlesNotReplenished > 0) {
-                        prt.print(Printer::Kind::Truck, "U", currentMachineIdx, bottlesNotReplenished);
+                        prt.print(Printer::Kind::Truck, 'U', currentMachineIdx, bottlesNotReplenished);
                     }
 
-                    prt.print(Printer::Kind::Truck, "D", currentMachineIdx, totalSoda);
+                    prt.print(Printer::Kind::Truck, 'D', currentMachineIdx, totalSoda);
                     
                     // Move to the next vending machine cyclically
                     currentMachineIdx = (currentMachineIdx + 1) % numVendingMachines;
 
                     // 1 in 100 chance of a flat tire; takes 10 yields to fix
                     if (prng(1, 100) == 1) {
-                        prt.print(Printer::Kind::Truck, "W");
+                        prt.print(Printer::Kind::Truck, 'W');
                         for (int i = 0; i < 10; i++) yield();
                     }
                 
@@ -86,11 +88,11 @@ void Truck::main(){
     }
     // If the bottling plant is closing down, the truck terminates.
     _CatchResume (BottlingPlant::Shutdown &) {
-        throw Shutdown();
+        throw BottlingPlant::Shutdown();
     }
     
     catch (BottlingPlant::Shutdown &) {
         // Handle plant shutdown
-        prt.print(Printer::Kind::Truck, "F");
+        prt.print(Printer::Kind::Truck, 'F');
     }
 }

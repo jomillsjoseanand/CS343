@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
     struct cmd_error {};
 
     // Initialize default values for command-line arguments if not provided.
-    string configFile = "soda.config";
+    char* configFile = "soda.config";
     unsigned int seed = 0; // 0 means use PRNG default
     unsigned int processors = 1;
 
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
     uProcessor p[processors - 1] __attribute__((unused));
 
     // Read configuration file
-    Config config;
+    ConfigParms config;
     try {
         processConfigFile(configFile, config);
     } catch (const exception &e) {
@@ -61,12 +61,12 @@ int main(int argc, char* argv[]) {
     Bank bank(config.numStudents);
     Parent parent(printer, bank, config.numStudents, config.parentalDelay);
     WATCardOffice watCardOffice(printer, bank, config.numCouriers);
-    Groupoff groupoff(printer, config.numStudents, config.sodaCost);
+    Groupoff groupoff(printer, config.numStudents, config.sodaCost, config.groupoffDelay);
     NameServer nameServer(printer, config.numVendingMachines, config.numStudents);
     VendingMachine *vendingMachines[config.numVendingMachines];
 
     for (unsigned int i = 0; i < config.numVendingMachines; ++i) {
-        vendingMachines[i] = new VendingMachine(printer, nameServer, i, config.sodaCost, config.maxStockPerFlavour);
+        vendingMachines[i] = new VendingMachine(printer, nameServer, i, config.sodaCost);
     }
 
     BottlingPlant *bottlingPlant = new BottlingPlant(

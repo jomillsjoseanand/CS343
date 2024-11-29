@@ -10,7 +10,7 @@ void WATCardOffice::Courier::main() {
             prt.print(Printer::Courier, 'F', id);
             break;
         } 
-        else {
+        _Else {
             // Get the next job request
             Job *job = office.requestWork();
             
@@ -21,10 +21,10 @@ void WATCardOffice::Courier::main() {
             }
             
             // Get the amount of money to transfer
-            unsigned int amount = job.args.amount;
+            unsigned int amount = job->args.amount;
             
             // Get the student's bank account
-            unsigned int sid = job.args.sid;
+            unsigned int sid = job->args.sid;
             
             // Get the bank's response
             prt.print(Printer::Courier, id, 't', sid, amount);
