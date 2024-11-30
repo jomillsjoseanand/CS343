@@ -75,7 +75,7 @@ void WATCardOffice::main() {
 WATCardOffice::~WATCardOffice() {
     death = true;
     
-        while (!(jobQueue.empty())) {
+    while (!(jobQueue.empty())) {
         delete jobQueue.front();
         jobQueue.pop();
     }

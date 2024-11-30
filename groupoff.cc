@@ -4,6 +4,7 @@
 Groupoff::Groupoff( Printer & prt, unsigned int numStudents, unsigned int sodaCost, unsigned int groupoffDelay ) : 
     prt(prt), numStudents(numStudents), sodaCost(sodaCost), groupoffDelay(groupoffDelay) {
     prt.print(Printer::Kind::Groupoff, 'S');
+    
     giftCards = vector<WATCard::FWATCard>(numStudents);
 }
 
@@ -14,6 +15,11 @@ WATCard::FWATCard Groupoff::giftCard(unsigned int id) {
 
 // Destructor
 Groupoff::~Groupoff() {
+
+    // Delete all watcard ptrs
+    for (unsigned int i = 0; i < cards.size(); i++) {
+        delete cards[i];
+    }
 }
 
 
@@ -46,6 +52,11 @@ void Groupoff::main() {
         }
     }
 
+    unsigned int assignedGiftCards[numStudents];
+    for (unsigned int i = 0; i < numStudents; i++) {
+        assignedGiftCards[i] = false;
+    }
+
     // Assigning gift cards at random
     unsigned int assigned = 0;
     while (assigned < numStudents) {
@@ -54,13 +65,19 @@ void Groupoff::main() {
         } _Else {
             yield(groupoffDelay);
             unsigned int student = prng(numStudents);
-            if (!giftCards[student].available()) {
+            if (!assignedGiftCards[student]) {
+                
                 WATCard *giftCardObj = new WATCard();
+                cards.push_back(giftCardObj);
+                
                 giftCardObj->deposit(sodaCost);
+
                 giftCards[student].delivery(giftCardObj);
+                
                 // Print the assigned gift card
                 prt.print(Printer::Kind::Groupoff, 'D', student, sodaCost);
                 assigned++;
+                assignedGiftCards[student] = true;
             }
         }
     }

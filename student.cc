@@ -25,11 +25,13 @@ Student::~Student() {
             }
         }
 
-        if (giftCard.available()) {
-            delete giftCard();
-        }
+        // if (giftCard.available()) {
+        //     delete giftCard();
+        // }
     } catch( WATCardOffice::Lost &lost ) {
-
+        // if (giftCard.available()) {
+        //     delete giftCard();
+        // }
     }
     
 }
@@ -70,17 +72,22 @@ void Student::main() {
             _Enable {
                 // If both cards have money, use the gift card first
                 _Select (giftCard) {
+                    unsigned int currentBalance = giftCard()->getBalance();
                     vendingMachine->buy(favouriteFlavour, *giftCard());
-                    bottlesBought++;
-                    totalSodasDrank++;
-                    prt.print(Printer::Student, id, 'G', favouriteFlavour, giftCard()->getBalance());
-                    giftCard.reset();
+                    if (currentBalance != giftCard()->getBalance()) {
+                        bottlesBought++;
+                        totalSodasDrank++;
+                        prt.print(Printer::Student, id, 'G', favouriteFlavour, giftCard()->getBalance());
+                        giftCard.reset();
+                    }                   
                 } or _Select (watCard) {
-                    
+                    unsigned int currentBalance = watCard()->getBalance();
                     vendingMachine->buy(favouriteFlavour, *watCard());
-                    bottlesBought++;
-                    totalSodasDrank++;
-                    prt.print(Printer::Student, id, 'B', favouriteFlavour, watCard()->getBalance());
+                    if (currentBalance != watCard()->getBalance()) {
+                        bottlesBought++;
+                        totalSodasDrank++;
+                        prt.print(Printer::Student, id, 'B', favouriteFlavour, watCard()->getBalance());
+                    }
                 } 
             }
         } catch( WATCardOffice::Lost &lost ) {
@@ -110,6 +117,7 @@ void Student::main() {
 
             // If vending machine is out of the student’s favourite flavour, obtain a new vending machine from the name server and attempt another purchase
             vendingMachine = nameServer.getMachine(id);
+            prt.print(Printer::Student, id, 'V', vendingMachine->getId());
             goto buy;
         } catch( VendingMachine::Free &free ) {
             // 

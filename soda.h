@@ -103,6 +103,7 @@ _Task Groupoff {
     unsigned int sodaCost;
     unsigned int groupoffDelay;
     vector<WATCard::FWATCard> giftCards;
+    vector<WATCard*> cards;
     
   public:
     Groupoff( Printer & prt, unsigned int numStudents, unsigned int sodaCost, unsigned int groupoffDelay );
@@ -135,7 +136,7 @@ _Task BottlingPlant {
     unsigned int maxStockPerFlavour;
     unsigned int timeBetweenShipments;
     unsigned int inventory[4];
-    
+    bool should_throw;
     Truck *truck;
   
   public:

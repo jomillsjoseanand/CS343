@@ -47,7 +47,7 @@ void VendingMachine::buy( BottlingPlant::Flavours flavour, WATCard &card ) {
 
     // vending machine first checks if the student has sufficient funds to purchase the soda 
     if (card.getBalance() < sodaCost) _Throw Funds(); // Check if the student has enough funds
-    if (curr_inventory[flavour] == 0) _Throw Stock(); // Check if the soda is in stock
+    if (!curr_inventory[flavour]) _Throw Stock(); // Check if the soda is in stock
 
     // 1 in 5 chance the soda is free
     if (prng(4) == 0) {

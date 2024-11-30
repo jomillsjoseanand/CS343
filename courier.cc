@@ -15,14 +15,15 @@ void WATCardOffice::Courier::main() {
 
             // Get the next job request
             Job *job = office.requestWork();
+            bool createJob = false;
             
             if (job == nullptr) {
-
                 break;
             }
             // Get the student's card -- this is a placeholder
             WATCard *card = job->args.card;
             if (card == nullptr) {
+                createJob = true;
                 card = new WATCard();
             }
 
@@ -41,7 +42,7 @@ void WATCardOffice::Courier::main() {
             // 1 in 6 chance of losing the card
             // When the card is lost, the exception WATCardOffice::Lost is inserted into the future, 
             // rather than making the future available, and the current WATCard is deleted
-            if (prng(6) == 0) {
+            if (!createJob && (prng(6) == 0)) {
 
                 // Insert the exception into the future
                 job->result.delivery(new WATCardOffice::Lost);
