@@ -9,6 +9,8 @@ NameServer::NameServer( Printer & prt, unsigned int numVendingMachines, unsigned
 
 NameServer::~NameServer() {
     prt.print(Printer::Kind::NameServer, 'F'); // Indicate finish of NameServer
+    delete[] vendingMachines;
+    delete[] studentMachineIndex;
 }
 
 // Vending machines call VMregister to register themselves so students can subsequently locate them. 
@@ -21,9 +23,14 @@ void NameServer::VMregister( VendingMachine * vendingmachine ){
 // - getMachine to find a vending machine, and the name server must cycle through the vending
 //  machines separately for each student starting from their initial position
 VendingMachine * NameServer::getMachine( unsigned int id )  {
+    // cout << "here0" <<endl;
+
     bench.wait();
+    // cout << "here1" <<endl;
     VendingMachine * machine = vendingMachines[studentMachineIndex[id]];
     studentMachineIndex[id] = (studentMachineIndex[id] + 1) % numVendingMachines;
+    // cout << "here2" <<endl;
+
     prt.print(Printer::Kind::NameServer, 'N', id, machine->getId()); // Log request for machine
     return machine;
 }

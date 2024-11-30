@@ -1,20 +1,26 @@
 #include "soda.h"
 
 Truck::Truck( Printer & prt, NameServer & nameServer, BottlingPlant & plant, unsigned int numVendingMachines, unsigned int maxStockPerFlavour ) : prt(prt), nameServer(nameServer), plant(plant), 
-           numVendingMachines(numVendingMachines), maxStockPerFlavour(maxStockPerFlavour)  {}
+           numVendingMachines(numVendingMachines), maxStockPerFlavour(maxStockPerFlavour)  {
+            prt.print(Printer::Kind::Truck, 'S');
+           }
 
+Truck::~Truck(){
+    // delete [] cargo;
+    cout << "in trucks dtor"<< endl;
+}
 
 void Truck::main(){
-    prt.print(Printer::Kind::Truck, 'S');
-
     // Obtain vending machine locations from the NameServer
     VendingMachine **vendingMachines = nameServer.getMachineList();
 
-    unsigned int startMachineIdx = 0; // Track the current vending machine for cyclic restocking
+    unsigned int startMachineIdx = 0; // Track the current vending machine for cyclic restocking 
 
-    try {
-        _Enable{
+    // try {
+    //     _Enable{
             for (;;) {
+
+                
 
                 // Simulate a coffee break by yielding randomly between 1 and 10 times
                 yield(prng(1, 10));
@@ -33,30 +39,50 @@ void Truck::main(){
                 // is used. 
                 unsigned int currentMachineIdx = startMachineIdx ;
                 unsigned int totalSoda = 0;
-                for (unsigned int amount : cargo) totalSoda += amount;
+                for (unsigned int amount : cargo) {
+                    totalSoda += amount;
+                }
                 prt.print(Printer::Kind::Truck, 'P', totalSoda);
 
-                do {
-                    
+                do {                    
                     // the vending machine after the last machine the truck restocked, until there is no more soda on the truck or the
                     // truck has made a complete cycle
                     if (totalSoda == 0) break;
+                    
 
                     prt.print(Printer::Kind::Truck, 'd', currentMachineIdx, totalSoda);
 
                     VendingMachine* curr_machine = vendingMachines[currentMachineIdx];
+                    // cout << "got curr_machine: " << curr_machine->getId() <<endl;
+                    
                     int bottlesNotReplenished = 0;
-                    unsigned int * inventory = curr_machine->inventory();
+                    unsigned int * inventory;
+                    try {
+                        inventory = curr_machine->inventory();
+                    }
+                    
+                    catch (BottlingPlant::Shutdown &) {
+                        break;
+                    }
+                    // cout << "Inventory of curr machine: " << inventory[0] << " " << inventory[1] << " " << inventory[2] << " " << inventory[3] << endl;
+
+
                     for (unsigned int i = 0; i < 4; ++i) {
+                        // cout << "in the for " << endl;
                         unsigned int spaceAvailable = maxStockPerFlavour - inventory[i];
                         unsigned int stockToAdd = std::min(spaceAvailable, cargo[i]);
+                        
                         if (spaceAvailable > cargo[i]) {
                                 bottlesNotReplenished += spaceAvailable - cargo[i];
                         }
+
                         cargo[i] -= stockToAdd;
                         inventory[i] += stockToAdd;
                         totalSoda -= stockToAdd;
+                        // cout << "added drink" << endl;
                     }
+
+                    // cout << "Cargo: " << cargo[0] << " " << cargo[1] << " " << cargo[2] << " " << cargo[3] << endl;
 
                     // Update the vending machine inventory
                     curr_machine->restocked();
@@ -83,16 +109,17 @@ void Truck::main(){
                 startMachineIdx = currentMachineIdx;
                 
             }
-        }
+        // }
         
-    }
+    // }
     // If the bottling plant is closing down, the truck terminates.
-    _CatchResume (BottlingPlant::Shutdown &) {
-        throw BottlingPlant::Shutdown();
-    }
+    // _CatchResume (BottlingPlant::Shutdown &) {
+    //     throw BottlingPlant::Shutdown();
+    // }
     
-    catch (BottlingPlant::Shutdown &) {
-        // Handle plant shutdown
-        prt.print(Printer::Kind::Truck, 'F');
-    }
+    // catch (BottlingPlant::Shutdown &) {
+    //     // Handle plant shutdown
+    //     prt.print(Printer::Kind::Truck, 'F');
+    //     _Accept(~Truck) {}
+    // }
 }

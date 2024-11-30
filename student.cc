@@ -4,26 +4,52 @@ Student::Student( Printer & prt, NameServer & nameServer, WATCardOffice & cardOf
 			 unsigned int id, unsigned int maxPurchases) : prt(prt), nameServer(nameServer), 
              cardOffice(cardOffice), groupoff(groupoff), id(id), maxPurchases(maxPurchases) {
                 lostCard = false;
+                    // Select a random number of bottles to purchase [1, MaxPurchases]
+                    numPurchases = prng(1, maxPurchases);
+
+                    // Select a random favourite flavour [0, 3]
+                    favouriteFlavour = static_cast<BottlingPlant::Flavours>(prng(0, 3));
+
+                    prt.print(Printer::Student, id, 'S', favouriteFlavour, numPurchases); // Start of student
              }
+
+// Destructor
+Student::~Student() {
+
+    try {
+        if (watCard.available()) {
+            delete watCard();
+        } else {
+            _Select(watCard){
+                delete watCard();
+            }
+        }
+
+        if (giftCard.available()) {
+            delete giftCard();
+        }
+    } catch( WATCardOffice::Lost &lost ) {
+
+    }
+    
+}
 
 
 void Student::main() {
-    // Select a random number of bottles to purchase [1, MaxPurchases]
-    unsigned int numPurchases = prng(1, maxPurchases);
-
-    // Select a random favourite flavour [0, 3]
-    BottlingPlant::Flavours favouriteFlavour = static_cast<BottlingPlant::Flavours>(prng(0, 3));
-
-    prt.print(Printer::Student, id, 'S', favouriteFlavour, numPurchases); // Start of student
-
     // Create a WATCard from the WATCardOffice and initialize balance with $5
-    WATCard::FWATCard watCard = cardOffice.create(id, 5);
+    watCard = cardOffice.create(id, 5);
+    // cout << "after watcard created" <<endl;
 
     // Create a gift card from Groupoff with a value of $SodaCost
-    WATCard::FWATCard giftCard = groupoff.giftCard(id);
+    giftCard = groupoff.giftCard(id);
+    // cout << "after giftcard created" <<endl;
 
     // Obtain the location of a vending machine from the name server
-    VendingMachine *vendingMachine = nameServer.getMachine(id);
+    // cout <<"before getting machine "<<endl;
+    vendingMachine = nameServer.getMachine(id);
+    // cout <<"after getting machine "<<endl;
+    // cout << "vendingMachine: " << vendingMachine->getId();
+
 
     // Print selecting vending machine
     prt.print(Printer::Student, id, 'V', vendingMachine->getId());
@@ -33,6 +59,7 @@ void Student::main() {
     unsigned int bottlesBought = 0;
 
     while (bottlesBought < numPurchases) {
+    buy: {
         if (!lostCard) {
             yield(prng(1, 10)); // Yield before attempting to purchase
         }
@@ -56,12 +83,13 @@ void Student::main() {
                     prt.print(Printer::Student, id, 'B', favouriteFlavour, watCard()->getBalance());
                 } 
             }
-        } _CatchResume(WATCardOffice::Lost) {
+        } catch( WATCardOffice::Lost &lost ) {
             lostCard = true;
             prt.print(Printer::Student, id, 'L'); // Lost card
             watCard = cardOffice.create(id, 5);
-        } 
-        _CatchResume(VendingMachine::Funds) {
+            goto buy;
+            
+        }  catch ( VendingMachine::Funds &funds ) {
             // 
             // If the vending machine indicates
             // insufficient funds, a student transfers the current vending-machine soda-cost plus $5 to their WATCard via the
@@ -70,7 +98,8 @@ void Student::main() {
 
             // If vending machine indicates insufficient funds, transfer the current vending-machine soda-cost plus $5 to their WATCard via the WATCard office and attempt another purchase
             watCard = cardOffice.transfer(id, vendingMachine->cost() + 5, watCard());
-        } _CatchResume(VendingMachine::Stock) {
+            goto buy;
+        } catch( VendingMachine::Stock &stock ) {
             // 
             // If the vending machine is out of the student’s favourite flavour,
             // the student must obtain a new vending machine from the name server and 
@@ -81,7 +110,8 @@ void Student::main() {
 
             // If vending machine is out of the student’s favourite flavour, obtain a new vending machine from the name server and attempt another purchase
             vendingMachine = nameServer.getMachine(id);
-        } _CatchResume(VendingMachine::Free) {
+            goto buy;
+        } catch( VendingMachine::Free &free ) {
             // 
             // there is a 50% chance the student watches an advertisement 
             // associated with it by yielding 4 times (not random) 
@@ -96,7 +126,9 @@ void Student::main() {
             } else {
                 prt.print(Printer::Student, id, 'X'); // No advertisement
             }
+            goto buy;
         }
+    }
     }
 
     prt.print(Printer::Student, id, 'F', totalSodasDrank, totalFreeSodas); // Finished

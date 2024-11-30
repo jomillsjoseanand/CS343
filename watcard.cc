@@ -11,6 +11,9 @@
 // Constructor
 WATCard::WATCard() : balance(0) {}
 
+// Destructor
+WATCard::~WATCard() {}
+
 // Deposit money into the WATCard
 void WATCard::deposit(unsigned int amount) {
     mutex.P();

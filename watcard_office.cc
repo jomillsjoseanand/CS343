@@ -1,15 +1,18 @@
 #include "soda.h"
 
-
-
 // Constructor
 WATCardOffice::WATCardOffice( Printer &prt, Bank &bank, unsigned int numCouriers ) : 
     prt(prt), bank(bank), numCouriers(numCouriers) {
-    // Create courier pool
-    couriers = new Courier *[numCouriers];
+    prt.print(Printer::Kind::WATCardOffice, 'S');
+    // Reserve space for the couriers
+    couriers.reserve(numCouriers);
+
+    // Create each Courier and store it in the vector
     for (unsigned int i = 0; i < numCouriers; i++) {
-        couriers[i] = new Courier(prt, bank, *this, i);
+        couriers.push_back(new Courier(prt, bank, *this, i));
     }
+
+    death = false;
 }
 
 WATCard::FWATCard WATCardOffice::create(unsigned int sid, unsigned int amount) {
@@ -39,36 +42,57 @@ WATCard::FWATCard WATCardOffice::transfer(unsigned int sid, unsigned int amount,
 // rather than making the future available, and the current WATCard is deleted
 WATCardOffice::Job * WATCardOffice::requestWork() {
     // Wait for a job
-    while (jobQueue.empty()) { 
+    while (!death && jobQueue.empty()) { 
         bench.wait();
     }    
 
+    if (death && jobQueue.empty()) {
+        return nullptr;
+    }
+
     Job *job = jobQueue.front();
     jobQueue.pop();
+    prt.print(Printer::Kind::WATCardOffice, 'W');
+
     return job;   
 }
 
 void WATCardOffice::main() {
-    prt.print(Printer::Kind::WATCardOffice, 'S');
     for ( ;; ) {
         _Accept(~WATCardOffice) {
-            prt.print(Printer::Kind::WATCardOffice, 'F');
+            prt.print(Printer::Kind::WATCardOffice, 'F');            
             break;
         } or _Accept(create) {
             bench.signalBlock();
         } or _Accept(transfer) {
             bench.signalBlock();
         } or _Accept(requestWork) {
-            prt.print(Printer::Kind::WATCardOffice, 'W');
+            // prt.print(Printer::Kind::WATCardOffice, 'W');
         }
     }
 }
 
 WATCardOffice::~WATCardOffice() {
-    for (unsigned int i = 0; i < numCouriers; i++) {
-        delete couriers[i];
+    death = true;
+    
+        while (!(jobQueue.empty())) {
+        delete jobQueue.front();
+        jobQueue.pop();
     }
-    delete[] couriers;
+
+
+    while (!(bench.empty())) {
+        bench.signalBlock();
+    }
+
+   
+    for (Courier* courier : couriers) {
+        delete courier;
+    }
+
+    // cout << "WATCardOffice destructor 3" << endl;
+    // delete[] couriers;
+    // cout << "WATCardOffice destructor 4" << endl;
 }
 
 // - Create method eventually polulates future

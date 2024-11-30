@@ -3,14 +3,17 @@
 // Constructor
 Groupoff::Groupoff( Printer & prt, unsigned int numStudents, unsigned int sodaCost, unsigned int groupoffDelay ) : 
     prt(prt), numStudents(numStudents), sodaCost(sodaCost), groupoffDelay(groupoffDelay) {
+    prt.print(Printer::Kind::Groupoff, 'S');
     giftCards = vector<WATCard::FWATCard>(numStudents);
 }
 
 // giftCard
 WATCard::FWATCard Groupoff::giftCard(unsigned int id) {
-    giftCards[id] = WATCard::FWATCard();
-    prt.print(Printer::Groupoff, 'G', id);
     return giftCards[id];
+}
+
+// Destructor
+Groupoff::~Groupoff() {
 }
 
 
@@ -34,29 +37,35 @@ WATCard::FWATCard Groupoff::giftCard(unsigned int id) {
 
 // Main function
 void Groupoff::main() {
-    prt.print(Printer::Kind::Groupoff, 'S');
     unsigned int assignedCards = 0;
     while (assignedCards < numStudents) {
-        _Accept(giftCard) {
-            assignedCards++;
-        } _Else {
-            prt.print(Printer::Kind::Groupoff, 'F');
+        _Accept(~Groupoff) {
             break;
+        } or _Accept(giftCard) {
+            assignedCards++;
         }
     }
+
     // Assigning gift cards at random
     unsigned int assigned = 0;
     while (assigned < numStudents) {
-        yield(groupoffDelay);
-        unsigned int student = prng(numStudents - 1);
-        if (!giftCards[student].available()) {
-            WATCard *giftCardObj = new WATCard();
-            giftCardObj->deposit(sodaCost);
-            giftCards[student].delivery(giftCardObj);
-            // Print the assigned gift card
-            prt.print(Printer::Kind::Groupoff, 'D', student, sodaCost);
-            assigned++;
+        _Accept(~Groupoff) {
+            break;
+        } _Else {
+            yield(groupoffDelay);
+            unsigned int student = prng(numStudents);
+            if (!giftCards[student].available()) {
+                WATCard *giftCardObj = new WATCard();
+                giftCardObj->deposit(sodaCost);
+                giftCards[student].delivery(giftCardObj);
+                // Print the assigned gift card
+                prt.print(Printer::Kind::Groupoff, 'D', student, sodaCost);
+                assigned++;
+            }
         }
     }
+
     prt.print(Printer::Kind::Groupoff, 'F');
+    _Accept(~Groupoff) {
+    }
 }

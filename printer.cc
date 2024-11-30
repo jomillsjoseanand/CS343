@@ -128,4 +128,3 @@ void Printer::print( Kind kind, unsigned int lid, char state, unsigned int value
     buffer[col] = { state, (int)value1, (int)value2, false };
 }
 
-

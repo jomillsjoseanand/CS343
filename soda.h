@@ -37,6 +37,7 @@ class WATCard {
     typedef Future_ISM<WATCard *> FWATCard; // Future WATCard pointer	
     
     WATCard();
+    ~WATCard();
     void deposit( unsigned int amount );
     void withdraw( unsigned int amount );
     unsigned int getBalance();
@@ -65,19 +66,24 @@ _Task WATCardOffice {
         Bank &bank;
         WATCardOffice &office;
         unsigned int id;
+        
 
         public:
+            // TODO: may need a dtor
             Courier(Printer &prt, Bank &bank, WATCardOffice &office, unsigned int id)
                 : prt(prt), bank(bank), office(office), id(id) {}
+
+            ~Courier();
     };					// communicates with bank
 
-
+  
     Printer & prt;
     Bank & bank;
     unsigned int numCouriers;
-    Courier **couriers;
+    vector<Courier*> couriers; // Vector of pointers to Courier objects
     std::queue<Job *> jobQueue;             // Queue of job requests
     uCondition bench;
+    bool death;
 
 	void main();
   public:
@@ -100,6 +106,7 @@ _Task Groupoff {
     
   public:
     Groupoff( Printer & prt, unsigned int numStudents, unsigned int sodaCost, unsigned int groupoffDelay );
+    ~Groupoff();
     WATCard::FWATCard giftCard( unsigned int id );
 };
 
@@ -108,13 +115,14 @@ _Task Truck {
     Printer & prt;
     NameServer & nameServer;
     BottlingPlant & plant;
-	unsigned int numVendingMachines;
+	  unsigned int numVendingMachines;
     unsigned int maxStockPerFlavour;
     unsigned int cargo[4];
 
 
   public:
 	Truck( Printer & prt, NameServer & nameServer, BottlingPlant & plant, unsigned int numVendingMachines, unsigned int maxStockPerFlavour );
+  ~Truck();
 };
 
 _Task BottlingPlant {
@@ -158,7 +166,8 @@ _Task VendingMachine {
 	_Exception Free {};						// free, advertisement
 	
 	VendingMachine( Printer & prt, NameServer & nameServer, unsigned int id, unsigned int sodaCost );
-	void buy( BottlingPlant::Flavours flavour, WATCard & card );
+	~VendingMachine();
+  void buy( BottlingPlant::Flavours flavour, WATCard & card );
 	unsigned int * inventory() __attribute__(( warn_unused_result ));
 	void restocked();
 	_Nomutex unsigned int cost() const;
@@ -201,6 +210,7 @@ _Task Student {
   public:
     Student( Printer & prt, NameServer & nameServer, WATCardOffice & cardOffice, Groupoff & groupoff,
         unsigned int id, unsigned int maxPurchases );
+    ~Student();
 };
 
 _Monitor Bank {
@@ -225,6 +235,7 @@ _Task Parent {
     
     public:
         Parent( Printer & prt, Bank & bank, unsigned int numStudents, unsigned int parentalDelay );
+        ~Parent();
 };
 
 _Monitor Printer {

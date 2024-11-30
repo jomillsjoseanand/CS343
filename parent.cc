@@ -16,7 +16,7 @@ void Parent::main(){
     prt.print(Printer::Kind::Parent, 'S'); // Parent start message
     unsigned int total = 0;
 
-    while (true) {
+    for (;;) {
         _Accept(~Parent) {
             prt.print(Printer::Kind::Parent, 'F', total); // Parent finish message
             break; // Destructor called, terminate the loop
@@ -37,4 +37,10 @@ void Parent::main(){
             prt.print(Printer::Kind::Parent, 'D', studentId, amount);
         }
     }
+}
+
+Parent::~Parent() {
+    // Destructor
+    // Print the destructor message
+    // prt.print(Printer::Kind::Parent, '');
 }

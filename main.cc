@@ -58,24 +58,24 @@ int main(int argc, char* argv[]) {
 
     // creates in order: printer, bank, parent, WATCard office, groupoff, name server, vending machines, bottling plant, and students. 
     Printer printer(config.numStudents, config.numVendingMachines, config.numCouriers);
-    Bank bank(config.numStudents);
-    Parent parent(printer, bank, config.numStudents, config.parentalDelay);
-    WATCardOffice watCardOffice(printer, bank, config.numCouriers);
+    Bank *bank = new Bank(config.numStudents);
+    Parent *parent = new Parent(printer, *bank, config.numStudents, config.parentalDelay);
+    WATCardOffice *watCardOffice = new WATCardOffice(printer, *bank, config.numCouriers);
     Groupoff groupoff(printer, config.numStudents, config.sodaCost, config.groupoffDelay);
-    NameServer nameServer(printer, config.numVendingMachines, config.numStudents);
+    NameServer *nameServer = new NameServer(printer, config.numVendingMachines, config.numStudents);
     VendingMachine *vendingMachines[config.numVendingMachines];
 
     for (unsigned int i = 0; i < config.numVendingMachines; ++i) {
-        vendingMachines[i] = new VendingMachine(printer, nameServer, i, config.sodaCost);
+        vendingMachines[i] = new VendingMachine(printer, *nameServer, i, config.sodaCost);
     }
 
     BottlingPlant *bottlingPlant = new BottlingPlant(
-        printer, nameServer, config.numVendingMachines, config.maxShippedPerFlavour,
+        printer, *nameServer, config.numVendingMachines, config.maxShippedPerFlavour,
         config.maxStockPerFlavour, config.timeBetweenShipments);
 
     Student *students[config.numStudents];
     for (unsigned int i = 0; i < config.numStudents; ++i) {
-        students[i] = new Student(printer, nameServer, watCardOffice, groupoff, i, config.maxPurchases);
+        students[i] = new Student(printer, *nameServer, *watCardOffice, groupoff, i, config.maxPurchases);
     }
 
     // Wait for students to complete
@@ -94,4 +94,8 @@ int main(int argc, char* argv[]) {
         delete vendingMachines[i];
     }
 
+    delete nameServer;
+    delete watCardOffice;
+    delete parent;
+    delete bank;
 }
