@@ -16,8 +16,8 @@ void Truck::main(){
 
     unsigned int startMachineIdx = 0; // Track the current vending machine for cyclic restocking 
 
-    // try {
-    //     _Enable{
+    try {
+        _Enable{
             for (;;) {
 
                 
@@ -56,14 +56,7 @@ void Truck::main(){
                     // cout << "got curr_machine: " << curr_machine->getId() <<endl;
                     
                     int bottlesNotReplenished = 0;
-                    unsigned int * inventory;
-                    try {
-                        inventory = curr_machine->inventory();
-                    }
-                    
-                    catch (BottlingPlant::Shutdown &) {
-                        break;
-                    }
+                    unsigned int * inventory = curr_machine->inventory();
                     // cout << "Inventory of curr machine: " << inventory[0] << " " << inventory[1] << " " << inventory[2] << " " << inventory[3] << endl;
 
 
@@ -109,17 +102,17 @@ void Truck::main(){
                 startMachineIdx = currentMachineIdx;
                 
             }
-        // }
+        }
         
-    // }
+    }
     // If the bottling plant is closing down, the truck terminates.
-    // _CatchResume (BottlingPlant::Shutdown &) {
-    //     throw BottlingPlant::Shutdown();
-    // }
+    _CatchResume (BottlingPlant::Shutdown &) {
+        throw BottlingPlant::Shutdown();
+    }
     
-    // catch (BottlingPlant::Shutdown &) {
-    //     // Handle plant shutdown
-    //     prt.print(Printer::Kind::Truck, 'F');
-    //     _Accept(~Truck) {}
-    // }
+    catch (BottlingPlant::Shutdown &) {
+        // Handle plant shutdown
+        prt.print(Printer::Kind::Truck, 'F');
+        _Accept(~Truck) {}
+    }
 }
