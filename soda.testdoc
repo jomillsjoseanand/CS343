@@ -117,6 +117,11 @@ The output demonstrates correct behavior if:
 1. The student detects the loss of the WATCard.
 2. A new WATCard is successfully created and used for future transactions.
 
+The observed output demonstrates that the system correctly handles the scenario where a courier loses a WATCard. 
+As expected, a Lost exception is raised, which is evident from the log entry indicating the loss of the WATCard (L). 
+Subsequently, the student promptly requests the creation of a new WATCard (C entries for the same student ID adding 5 dollars to their card), 
+ensuring that they can proceed with their purchase attempts. 
+
 ---
 
 ## **Test Case 2: Vending Machine Out of Stock**
@@ -246,6 +251,13 @@ The output is correct if:
 1. The `Stock` exception is raised.
 2. The student attempts to use a different vending machine.
 3. The student eventually completes their purchase.
+
+The observed output confirms that the system handles stock shortages as expected. 
+When the student's favorite flavor runs out at their current vending machine, the `Stock` exception is raised, in this example 
+student 0 raises the exception, prompting the NameServer for another vending machine (`N` entries indicating new vending machine queries). 
+The log also shows that student 0 is then Successfully assigned a new machine printing `V1`, 
+Lastly, you can see that the student successfully retries at alternative machines (`G` and `B` entries for purchases), 
+completing their transaction after navigating through the stock challenges. 
 
 ---
 
@@ -379,6 +391,11 @@ F39
 Correct behavior includes:
 1. The `Free` exception triggers appropriately.
 2. The student's choice to watch or skip the advertisement is recorded.
+
+The observed output confirms that the system correctly handles the scenario of dispensing free sodas. The `Free` exception is triggered 
+appropriately, as seen in the logs (`A` entries indicating free sodas and `X` entries for skipped advertisements). 
+Students either watch the advertisement (`A` without `X`) or choose to skip it (`X` following `A`), and these decisions are clearly 
+reflected in the output. 
 
 ---
 
@@ -669,6 +686,11 @@ F45
 The output is correct if:
 1. Deliveries occur in the correct order and quantities.
 2. The truck's flat tire is handled as specified.
+
+The observed output demonstrates that the system correctly handles truck deliveries and flat tire scenarios. 
+The delivery logs show the truck visiting vending machines in order and delivering the appropriate quantities 
+(d and U entries for delivery and unloading actions). When a flat tire occurs, the truck pauses for the repair process, 
+as indicated by the W entry and subsequent delay before resuming deliveries. 
 
 ---
 
